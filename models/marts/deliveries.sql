@@ -13,6 +13,14 @@ deliveries as (
     from {{ ref('stg_ecomm__deliveries') }}
 ),
 
+order_counts as (
+    select
+        customer_id,
+        count(order_id) as total_order_count
+    from orders
+    group by 1
+),
+
 joined as (
     select
         orders.customer_id,
@@ -24,7 +32,7 @@ joined as (
 
 aggregated as (
     select
-        customer_id,
+        joined.customer_id,
         count(*) as total_delivery_count,
         count(case when delivery_status = 'delivered' then 1 end) as successful_delivery_count,
         count(case when delivery_status = 'cancelled' then 1 end) as failed_delivery_count,
@@ -34,10 +42,13 @@ aggregated as (
 )
 
 select
-    customer_id,
+    aggregated.customer_id,
+    total_order_count,
     total_delivery_count,
     successful_delivery_count,
     failed_delivery_count,
     last_delivery_date
 from aggregated
-order by customer_id
+inner join order_counts
+    on aggregated.customer_id = order_counts.customer_id
+order by aggregated.customer_id
