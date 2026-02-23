@@ -26,11 +26,21 @@ models:
       - name: order_id
         tests:
           - unique
-<<<<<<< HEAD
           - not_null
 
   - name: deliveries
     description: Each record represents a customer's aggregated delivery statistics, including total, successful, failed, and other-status deliveries.
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "successful_deliveries + failed_deliveries + other_status_deliveries = total_deliveries"
+      - dbt_utils.expression_is_true:
+          expression: "successful_deliveries >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "failed_deliveries >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "other_status_deliveries >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "total_deliveries >= 1"
     columns:
       - name: customer_id
         description: "{{ doc('customer_id') }}"
@@ -54,7 +64,4 @@ models:
         tests:
           - not_null
       - name: last_delivery_date
-        description: The timestamp of the customer's most recent successful delivery.
-=======
-          - not_null
->>>>>>> 6e1f459fdac50741953dcaa0a7e62423b9e57917
+        description: The timestamp of the customer's most recent successful delivery. Null if the customer has no successful deliveries.
