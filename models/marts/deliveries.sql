@@ -1,54 +1,46 @@
-with orders as (
+with customers as (
     select
-        order_id,
-        customer_id
+        *
+    from {{ ref('stg_ecomm__customers') }}
+),
+
+orders as (
+    select
+        *
     from {{ ref('stg_ecomm__orders') }}
 ),
 
 deliveries as (
     select
-        order_id,
-        delivery_status,
-        delivered_at
+        *
     from {{ ref('stg_ecomm__deliveries') }}
-),
-
-order_counts as (
-    select
-        customer_id,
-        count(order_id) as total_order_count
-    from orders
-    group by 1
 ),
 
 joined as (
     select
         orders.customer_id,
+        deliveries.delivery_id,
         deliveries.delivery_status,
         deliveries.delivered_at
     from deliveries
     inner join orders using (order_id)
+    inner join customers using (customer_id)
 ),
 
 aggregated as (
     select
-        joined.customer_id,
-        count(*) as total_delivery_count,
-        count(case when delivery_status = 'delivered' then 1 end) as successful_delivery_count,
-        count(case when delivery_status = 'cancelled' then 1 end) as failed_delivery_count,
+        customer_id,
+        count(*) as total_deliveries,
+        count(case when delivery_status = 'delivered' then 1 end) as successful_deliveries,
+        count(case when delivery_status = 'cancelled' then 1 end) as failed_deliveries,
+        count(case when delivery_status not in ('delivered', 'cancelled') then 1 end) as other_status_deliveries,
+        count(case when delivery_status = 'delivered' then 1 end) / nullif(count(*), 0) as fulfillment_ratio,
         max(delivered_at) as last_delivery_date
     from joined
     group by 1
 )
 
 select
-    aggregated.customer_id,
-    total_order_count,
-    total_delivery_count,
-    successful_delivery_count,
-    failed_delivery_count,
-    last_delivery_date
+    *
 from aggregated
-inner join order_counts
-    on aggregated.customer_id = order_counts.customer_id
-order by aggregated.customer_id
+order by customer_id

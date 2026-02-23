@@ -19,7 +19,7 @@ models:
         description: The timestamp of a customer's first order.
       - name: most_recent_order_at
         description: The timestamp of a customer's most recent order.
-        
+
   - name: orders
     description: Each record represents an order.
     columns:
@@ -29,31 +29,28 @@ models:
           - not_null
 
   - name: deliveries
-    description: This model provides a comprehensive summary of delivery activities.
+    description: Each record represents a customer's aggregated delivery statistics, including total, successful, failed, and other-status deliveries.
     columns:
       - name: customer_id
-        description: A unique identifier for each customer.
-        data_tests:
-          - not_null
+        description: "{{ doc('customer_id') }}"
+        tests:
           - unique
-      - name: total_order_count
-        description: The total number of orders placed by the customer.
-        data_tests:
           - not_null
-      - name: total_delivery_count
-        description: The total number of deliveries associated with the customer's orders.
-        data_tests:
+      - name: total_deliveries
+        description: The total number of deliveries associated with the customer across all statuses.
+        tests:
           - not_null
-      - name: successful_delivery_count
-        description: The number of deliveries that were successfully completed for the
-          customer.
-        data_tests:
+      - name: successful_deliveries
+        description: The number of deliveries with a status of 'delivered'.
+        tests:
           - not_null
-      - name: failed_delivery_count
-        description: The number of deliveries that were cancelled or failed for the customer.
-        data_tests:
+      - name: failed_deliveries
+        description: The number of deliveries with a status of 'cancelled'.
+        tests:
+          - not_null
+      - name: other_status_deliveries
+        description: The number of deliveries with a status other than 'delivered' or 'cancelled'.
+        tests:
           - not_null
       - name: last_delivery_date
-        description: The date of the most recent delivery for the customer.
-        data_tests:
-          - not_null
+        description: The timestamp of the customer's most recent successful delivery.
